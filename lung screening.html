@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <!-- 針對手機與平板最佳化，禁止使用者縮放以呈現原生 APP 體驗 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LDCT 肺癌篩檢指引 APP</title>
+    <!-- 引入 Tailwind CSS 作為快速響應式排版框架 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 防止點擊時文字被選取，提升 APP 觸控體驗 */
+        body {
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* 轉場動畫 */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        /* 按下時的視覺回饋 */
+        .active-scale:active {
+            transform: scale(0.97);
+        }
+        /* 醫療風格漸層背景 */
+        .bg-medical {
+            background: linear-gradient(135deg, #0ba360 0%, #3cba92 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800 h-screen flex flex-col overflow-hidden">
+
+    <!-- 頂部導覽列 -->
+    <header class="bg-blue-700 text-white shadow-md flex items-center h-16 px-4 shrink-0 z-10 relative">
+        <button id="back-btn" class="hidden p-2 -ml-2 active-scale" onclick="goBack()">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+            </svg>
+        </button>
+        <h1 id="header-title" class="text-xl font-bold flex-1 text-center truncate">LDCT 肺癌篩檢指引</h1>
+        <div class="w-8"></div> <!-- 平衡標題置中用的空位 -->
+    </header>
+
+    <!-- 內容區域 (可滾動) -->
+    <main class="flex-1 overflow-y-auto p-4 md:p-6 pb-20">
+        
+        <!-- 首頁 (主選單) -->
+        <section id="view-home" class="view-section h-full flex flex-col justify-center max-w-2xl mx-auto space-y-4">
+            <p class="text-center text-gray-500 mb-2 text-sm">請選擇您要查詢的指引項目</p>
+            
+            <button onclick="navigate('view-screening', '篩檢對象評估')" class="active-scale flex items-center p-5 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                <div class="bg-blue-100 p-3 rounded-full mr-4 text-blue-600">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                </div>
+                <div class="text-left">
+                    <h2 class="text-xl font-bold text-gray-800">篩檢對象評估</h2>
+                    <p class="text-sm text-gray-500 mt-1">國健署補助對象、諮詢建議對象</p>
+                </div>
+            </button>
+
+            <button onclick="navigate('view-risks', '肺癌危險因子')" class="active-scale flex items-center p-5 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                <div class="bg-red-100 p-3 rounded-full mr-4 text-red-500">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
+                <div class="text-left">
+                    <h2 class="text-xl font-bold text-gray-800">肺癌危險因子</h2>
+                    <p class="text-sm text-gray-500 mt-1">菸品、家族史、職業暴露等</p>
+                </div>
+            </button>
+
+            <button onclick="startNoduleTree()" class="active-scale flex items-center p-5 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                <div class="bg-green-100 p-3 rounded-full mr-4 text-green-600">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                </div>
+                <div class="text-left">
+                    <h2 class="text-xl font-bold text-gray-800">肺結節追蹤處置</h2>
+                    <p class="text-sm text-gray-500 mt-1">依結節類型與大小之決策樹</p>
+                </div>
+            </button>
+
+            <button onclick="navigate('view-ct', 'CT 標準化規範')" class="active-scale flex items-center p-5 bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition">
+                <div class="bg-purple-100 p-3 rounded-full mr-4 text-purple-600">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                </div>
+                <div class="text-left">
+                    <h2 class="text-xl font-bold text-gray-800">CT 標準化規範</h2>
+                    <p class="text-sm text-gray-500 mt-1">設備與技術參數要求</p>
+                </div>
+            </button>
+
+            <button onclick="navigate('view-disclaimer', '免責聲明與須知')" class="active-scale flex items-center p-4 bg-gray-100 rounded-2xl shadow-sm border border-gray-200 hover:bg-gray-200 transition">
+                <div class="bg-gray-200 p-2 rounded-full mr-4 text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <div class="text-left">
+                    <h2 class="text-lg font-bold text-gray-700">免責聲明與使用須知</h2>
+                </div>
+            </button>
+
+            <!-- 參考指引聲明 -->
+            <div class="pt-6 text-center text-xs text-gray-400">
+                <p>資料來源：衛生福利部國民健康署</p>
+                <p>《胸部低劑量電腦斷層檢查肺癌篩檢指引》（114年4月22日第3版）</p>
+                <p class="mt-2">※ 本軟體僅供醫療參考，不具臨床診斷效力</p>
+            </div>
+        </section>
+
+        <!-- 一、篩檢對象評估 -->
+        <section id="view-screening" class="view-section hidden max-w-2xl mx-auto space-y-4">
+            <div class="bg-white rounded-xl shadow-sm border-l-8 border-blue-500 p-5 overflow-hidden">
+                <h3 class="text-lg font-bold text-blue-700 mb-2 flex items-center">
+                    <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-sm mr-2">1</span> 國健署補助對象
+                </h3>
+                <ul class="list-disc pl-5 space-y-2 text-gray-700">
+                    <li><strong class="text-gray-900">具肺癌家族史：</strong><br>女性40-74歲 或 男性45-74歲，且其父母、子女或兄弟姊妹經診斷為肺癌。</li>
+                    <li><strong class="text-gray-900">重度吸菸者：</strong><br>50-74歲，吸菸史達20包-年以上，仍在吸菸或戒菸未達15年。</li>
+                </ul>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border-l-8 border-yellow-400 p-5">
+                <h3 class="text-lg font-bold text-yellow-600 mb-2 flex items-center">
+                    <span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-sm mr-2">2</span> 宜考慮諮詢醫師對象
+                </h3>
+                <ul class="list-disc pl-5 space-y-2 text-gray-700">
+                    <li>有特定職業暴露史（如：石綿、油煙、粉塵等）。</li>
+                    <li>有肺病史者（如慢性發炎疾病）。</li>
+                </ul>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border-l-8 border-red-500 p-5">
+                <h3 class="text-lg font-bold text-red-600 mb-2 flex items-center">
+                    <span class="bg-red-100 text-red-700 px-2 py-1 rounded text-sm mr-2">3</span> 不建議篩檢對象
+                </h3>
+                <p class="text-gray-700">患有嚴重疾病或無法接受根治性癌症治療者。</p>
+            </div>
+        </section>
+
+        <!-- 二、肺癌危險因子 -->
+        <section id="view-risks" class="view-section hidden max-w-2xl mx-auto space-y-3">
+            <div class="p-4 bg-white rounded-xl shadow-sm border border-gray-100 flex items-start">
+                <div class="bg-gray-100 p-2 rounded-lg text-2xl mr-4">🚬</div>
+                <div>
+                    <h3 class="font-bold text-gray-800 text-lg">菸品</h3>
+                    <p class="text-gray-600 text-sm mt-1">吸菸及二手菸是最重要的因子。長期抽菸會增加 <strong class="text-red-500">10 到 30 倍</strong> 的肺癌風險。</p>
+                </div>
+            </div>
+            <div class="p-4 bg-white rounded-xl shadow-sm border border-gray-100 flex items-start">
+                <div class="bg-gray-100 p-2 rounded-lg text-2xl mr-4">👨‍👩‍👧‍👦</div>
+                <div>
+                    <h3 class="font-bold text-gray-800 text-lg">家族史</h3>
+                    <p class="text-gray-600 text-sm mt-1">父母、子女、兄弟姊妹或家族中有1位以上肺癌患者，機率較高。</p>
+                </div>
+            </div>
+            <div class="p-4 bg-white rounded-xl shadow-sm border border-gray-100 flex items-start">
+                <div class="bg-gray-100 p-2 rounded-lg text-2xl mr-4">🏭</div>
+                <div>
+                    <h3 class="font-bold text-gray-800 text-lg">石綿與職業暴露</h3>
+                    <p class="text-gray-600 text-sm mt-1">暴露於石綿等一級致癌物會導致肺纖維化及肺癌，若合併抽菸風險更高。</p>
+                </div>
+            </div>
+            <div class="p-4 bg-white rounded-xl shadow-sm border border-gray-100 flex items-start">
+                <div class="bg-gray-100 p-2 rounded-lg text-2xl mr-4">🫁</div>
+                <div>
+                    <h3 class="font-bold text-gray-800 text-lg">肺部慢性發炎疾病</h3>
+                    <p class="text-gray-600 text-sm mt-1">如肺結核、慢性阻塞性肺病(COPD)等，也會增加肺癌發生率。</p>
+                </div>
+            </div>
+            <div class="p-4 bg-white rounded-xl shadow-sm border border-gray-100 flex items-start">
+                <div class="bg-gray-100 p-2 rounded-lg text-2xl mr-4">🌫️</div>
+                <div>
+                    <h3 class="font-bold text-gray-800 text-lg">空氣汙染</h3>
+                    <p class="text-gray-600 text-sm mt-1">柴油引擎廢氣、細懸浮微粒(PM2.5)、油煙及生物質燃燒等汙染物。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 三、肺結節追蹤處置 (互動決策樹) -->
+        <section id="view-nodules" class="view-section hidden max-w-2xl mx-auto flex flex-col h-full">
+            <!-- 進度條 -->
+            <div id="tree-progress" class="flex items-center space-x-2 mb-4 overflow-x-auto pb-2 text-sm text-blue-600 whitespace-nowrap hidden">
+                <!-- 麵包屑導航透過 JS 動態生成 -->
+            </div>
+
+            <!-- 問題卡片 -->
+            <div id="tree-question-card" class="bg-white rounded-2xl shadow-sm border border-blue-100 p-6 text-center mb-6">
+                <h2 id="tree-question" class="text-2xl font-bold text-gray-800">載入中...</h2>
+            </div>
+
+            <!-- 選項按鈕區 -->
+            <div id="tree-options" class="flex flex-col space-y-3">
+                <!-- 選項透過 JS 動態生成 -->
+            </div>
+
+            <!-- 結果卡片 (隱藏) -->
+            <div id="tree-result" class="hidden bg-green-50 border-2 border-green-500 rounded-2xl p-6 text-center shadow-lg mt-4">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 mb-4">
+                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+                <h3 class="text-lg font-bold text-green-800 mb-2">處置建議：</h3>
+                <p id="tree-result-text" class="text-2xl font-black text-gray-900 mb-4"></p>
+                <button onclick="startNoduleTree()" class="w-full py-3 bg-white text-green-700 font-bold rounded-xl border border-green-200 active-scale shadow-sm">
+                    重新評估
+                </button>
+            </div>
+        </section>
+
+        <!-- 四、CT標準化規範 -->
+        <section id="view-ct" class="view-section hidden max-w-2xl mx-auto">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-purple-600 p-4 text-white">
+                    <h2 class="text-xl font-bold">CT掃描之最低要求及參數</h2>
+                </div>
+                <div class="p-0 divide-y divide-gray-100">
+                    <div class="p-4 flex items-center">
+                        <div class="text-purple-500 mr-4 font-bold text-xl">01</div>
+                        <p class="text-gray-700 text-lg">多排偵檢器 (MDCT)：<strong class="text-gray-900">至少 64切</strong>。</p>
+                    </div>
+                    <div class="p-4 flex items-center">
+                        <div class="text-purple-500 mr-4 font-bold text-xl">02</div>
+                        <p class="text-gray-700 text-lg">切面厚度 <strong class="text-gray-900">≤5mm</strong> 及 <strong class="text-gray-900">≤1.25mm</strong> 之軸向切面影像。</p>
+                    </div>
+                    <div class="p-4 flex items-center">
+                        <div class="text-purple-500 mr-4 font-bold text-xl">03</div>
+                        <p class="text-gray-700 text-lg">CT 體積劑量指標 (CTDIvol) <strong class="text-gray-900">小於 3.0mGy</strong>。</p>
+                    </div>
+                    <div class="p-4 flex items-center">
+                        <div class="text-purple-500 mr-4 font-bold text-xl">04</div>
+                        <p class="text-gray-700 text-lg">檢查過程 <strong class="text-gray-900">不需靜脈注射顯影劑</strong>。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 五、免責聲明 -->
+<section id="view-disclaimer" class="view-section hidden max-w-2xl mx-auto space-y-4 text-gray-700 leading-relaxed">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4 border-b pb-2">重要醫療資訊與版權聲明</h3>
+        <div class="space-y-4">
+            <p>
+                <span class="font-bold text-red-600">本軟體僅供學術與資訊參考使用</span>。
+                其內容乃依據「衛生福利部國民健康署」發布之《肺癌篩檢指引》進行資訊結構化呈現，
+                <span class="font-bold">版權歸原發布機關所有</span>。
+                本軟體為獨立開發，並非國民健康署官方發布之應用程式。
+            </p>
+
+            <p>
+                <span class="font-bold text-blue-800">非醫療行為聲明：</span> 
+                本軟體所呈現之自動篩檢流程與指引摘要，旨在協助使用者快速檢索公開資訊，
+                <span class="font-bold underline">不具備臨床診斷、治療建議或任何醫療處置之正式效力</span>，
+                亦不應被視為醫療決策支援系統。
+            </p>
+
+            <p>
+                <span class="font-bold">臨床判斷優先：</span> 
+                任何關於肺癌篩檢（LDCT）、結節追蹤或後續治療之決策，
+                必須由專科醫師根據病患之個人病史、影像特徵及臨床狀況進行最終判斷。
+                <span class="font-bold italic">App 之計算或分類結果不應取代醫師之現場專業指導。</span>
+            </p>
+
+            <p>
+                <span class="font-bold">資料時效性：</span> 
+                醫學指引隨實證醫學進步而動態更新（目前參考版本：114年版）。
+                開發團隊雖盡力維持內容準確，但無法保證內容絕對即時或完整。
+            </p>
+
+            <p class="text-sm bg-gray-50 p-3 rounded border border-gray-100">
+                <span class="font-bold">法律免責：</span> 
+                使用者於操作本軟體前，即代表已閱讀並同意此免責條款。
+                開發者不對因使用或誤用本軟體所產生的任何直接或間接損失負損害賠償責任。
+            </p>
+        </div>
+
+        <div class="mt-8">
+            <button onclick="goBack()" class="w-full py-3 bg-blue-600 text-white font-bold rounded-xl active-scale shadow-sm hover:bg-blue-700 transition-colors">
+                我已閱讀並了解上述聲明
+            </button>
+        </div>
+    </div>
+</section>
+
+    </main>
+
+    <script>
+        // --- 視圖導航邏輯 ---
+        let viewHistory = ['view-home'];
+        
+        function navigate(viewId, title) {
+            // 隱藏所有視圖
+            document.querySelectorAll('.view-section').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('fade-in');
+            });
+            
+            // 顯示目標視圖
+            const targetView = document.getElementById(viewId);
+            targetView.classList.remove('hidden');
+            // 觸發重新繪製以套用動畫
+            void targetView.offsetWidth; 
+            targetView.classList.add('fade-in');
+
+            // 更新標題與歷史紀錄
+            document.getElementById('header-title').innerText = title;
+            document.getElementById('back-btn').classList.remove('hidden');
+            
+            if (viewHistory[viewHistory.length - 1] !== viewId) {
+                viewHistory.push(viewId);
+            }
+        }
+
+        function goBack() {
+            if (viewHistory.length > 1) {
+                // 如果在決策樹中且不是在根節點，優先執行決策樹的上一步
+                if (viewHistory[viewHistory.length - 1] === 'view-nodules' && treePath.length > 0) {
+                    treeGoBack();
+                    return;
+                }
+
+                viewHistory.pop(); // 移除當前
+                const prevView = viewHistory[viewHistory.length - 1];
+                
+                // 隱藏所有視圖
+                document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+                
+                // 顯示前一個視圖
+                const targetView = document.getElementById(prevView);
+                targetView.classList.remove('hidden');
+                targetView.classList.add('fade-in');
+
+                // 處理首頁狀態
+                if (prevView === 'view-home') {
+                    document.getElementById('header-title').innerText = 'LDCT 肺癌篩檢指引';
+                    document.getElementById('back-btn').classList.add('hidden');
+                } else {
+                    // 還原標題 (依照 ID 判斷)
+                    const titles = {
+                        'view-screening': '篩檢對象評估',
+                        'view-risks': '肺癌危險因子',
+                        'view-nodules': '肺結節追蹤處置',
+                        'view-ct': 'CT 標準化規範',
+                        'view-disclaimer': '免責聲明與須知'
+                    };
+                    document.getElementById('header-title').innerText = titles[prevView] || 'LDCT 肺癌篩檢指引';
+                }
+            }
+        }
+
+        // --- 肺結節決策樹邏輯 ---
+        // 依據指引建立決策資料結構 (保持原有內容)
+        const decisionTree = {
+            question: "本次檢查為？",
+            options: [
+                {
+                    label: "初次篩檢",
+                    next: {
+                        question: "請選擇結節類型：",
+                        options: [
+                            {
+                                label: "實質結節 (Solid)",
+                                next: {
+                                    question: "請選擇結節大小：",
+                                    options: [
+                                        { label: "< 6 mm", result: "每年 1 次檢查追蹤" },
+                                        { label: "≥ 6 ~ < 8 mm", result: "6 個月內檢查追蹤" },
+                                        { label: "≥ 8 mm", result: "轉介胸腔專科醫師評估" }
+                                    ]
+                                }
+                            },
+                            {
+                                label: "非實質結節 (Non-solid / 純毛玻璃樣)",
+                                next: {
+                                    question: "請選擇結節大小：",
+                                    options: [
+                                        { label: "< 20 mm", result: "每年 1 次檢查追蹤" },
+                                        { label: "≥ 20 mm", result: "6 個月內檢查追蹤" }
+                                    ]
+                                }
+                            },
+                            {
+                                label: "部分實質結節 (Part-solid)",
+                                next: {
+                                    question: "請依整體或實心大小選擇：",
+                                    options: [
+                                        { label: "整體 < 6 mm", result: "每年 1 次檢查追蹤" },
+                                        { label: "整體 ≥ 6 mm 且 實心部分 < 6 mm", result: "6 個月內檢查追蹤" },
+                                        { label: "實心部分 ≥ 6 ~ < 8 mm", result: "3 個月內檢查追蹤" },
+                                        { label: "實心部分 > 8 mm", result: "轉介胸腔專科醫師評估\n(低風險3個月追蹤/高風險開刀切片)" }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                },
+                {
+                    label: "後續追蹤",
+                    next: {
+                        question: "請選擇結節類型：",
+                        options: [
+                            {
+                                label: "實質結節 (Solid)",
+                                next: {
+                                    question: "請選擇先前或目前的結節大小與狀態：",
+                                    options: [
+                                        { label: "< 6 mm", result: "每年 1 次檢查追蹤" },
+                                        {
+                                            label: "≥ 6 ~ < 8 mm",
+                                            next: {
+                                                question: "結節是否有變化 (增大 > 1.5mm)？",
+                                                options: [
+                                                    { label: "無變化", result: "6 個月內檢查追蹤" },
+                                                    { label: "有變化", result: "轉介胸腔專科醫師評估" }
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            label: "≥ 8 mm",
+                                            next: {
+                                                question: "結節狀態與風險評估為？",
+                                                options: [
+                                                    { label: "穩定", result: "每年 1 次檢查追蹤" },
+                                                    { label: "低風險", result: "3 個月內檢查追蹤" },
+                                                    { label: "高風險", result: "開刀或切片" },
+                                                    { label: "有變化", result: "手術" }
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            label: "支氣管內病灶",
+                                            next: {
+                                                question: "目前追蹤狀態？",
+                                                options: [
+                                                    { label: "尚未追蹤", result: "1 個月內檢查追蹤\n(若有劇烈咳嗽則應馬上安排)" },
+                                                    { label: "無緩解 (No Resolution)", result: "安排支氣管鏡檢查" }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                label: "部分實質結節 (Part-solid)",
+                                next: {
+                                    question: "追蹤期間的變化結果為？",
+                                    options: [
+                                        {
+                                            label: "無變化",
+                                            next: {
+                                                question: "請選擇整體與實心部分大小：",
+                                                options: [
+                                                    { label: "整體 < 6 mm", result: "每年 1 次檢查追蹤" },
+                                                    { label: "整體 ≥ 6 mm，且實心部分 < 6 mm", result: "每年 1 次檢查追蹤" },
+                                                    { label: "整體 ≥ 6 mm，且實心部分 ≥ 6 ~ < 8 mm", result: "6 個月內檢查追蹤\n(若持續無變化則每年 1 次)" }
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            label: "出現新結節 或 實心部分變大 (>1.5mm)",
+                                            next: {
+                                                question: "請選擇結節大小：",
+                                                options: [
+                                                    { label: "整體 < 6 mm", result: "6 個月內檢查追蹤" },
+                                                    {
+                                                        label: "整體 ≥ 6 mm",
+                                                        next: {
+                                                            question: "實心部分大小為？",
+                                                            options: [
+                                                                { label: "實心部分 < 4 mm", result: "3 個月內檢查追蹤" },
+                                                                { label: "實心部分 ≥ 4 mm", result: "轉介胸腔專科醫師評估：\n• 低風險：3 個月內檢查追蹤\n• 高風險：開刀或切片\n(若確診良性，則每年 1 次檢查追蹤)" }
+                                                            ]
+                                                        }
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                label: "非實質結節 (Non-solid / 純毛玻璃樣)",
+                                next: {
+                                    question: "追蹤期間的變化結果為？",
+                                    options: [
+                                        {
+                                            label: "穩定無變化",
+                                            next: {
+                                                question: "請選擇結節大小：",
+                                                options: [
+                                                    { label: "< 20 mm", result: "每年 1 次檢查追蹤" },
+                                                    { label: "≥ 20 mm", result: "6 個月內檢查追蹤\n(若持續無變化則每年 1 次)" }
+                                                ]
+                                            }
+                                        },
+                                        {
+                                            label: "出現新結節 (≥4mm) 或 結節變大 (>1.5mm)",
+                                            next: {
+                                                question: "請選擇結節大小：",
+                                                options: [
+                                                    { label: "< 20 mm", result: "轉介胸腔專科醫師評估：\n• A方案：每年 1 次檢查追蹤\n• B方案：開刀或切片\n(若確診良性，則每年 1 次檢查追蹤)" },
+                                                    { label: "≥ 20 mm", result: "轉介胸腔專科醫師評估：\n• A方案：6 個月內檢查追蹤\n• B方案：開刀或切片\n(若確診良性，則每年 1 次檢查追蹤)" }
+                                                ]
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        };
+
+        let currentNode = null;
+        let treePath = []; // 儲存走過的節點，用於上一頁
+
+        function startNoduleTree() {
+            navigate('view-nodules', '肺結節追蹤處置');
+            currentNode = decisionTree;
+            treePath = [];
+            document.getElementById('tree-result').classList.add('hidden');
+            document.getElementById('tree-question-card').classList.remove('hidden');
+            document.getElementById('tree-options').classList.remove('hidden');
+            document.getElementById('tree-progress').classList.remove('hidden');
+            renderNode();
+        }
+
+        function renderNode() {
+            const questionEl = document.getElementById('tree-question');
+            const optionsEl = document.getElementById('tree-options');
+            const progressEl = document.getElementById('tree-progress');
+            
+            // 渲染進度條 (麵包屑)
+            if (treePath.length === 0) {
+                progressEl.innerHTML = `<span>開始</span>`;
+            } else {
+                let crumbs = ``;
+                treePath.forEach((step, idx) => {
+                    crumbs += `<span class="truncate max-w-[100px]">${step.selectedLabel}</span>`;
+                    if (idx < treePath.length) crumbs += `<span class="mx-1 text-gray-400">/</span>`;
+                });
+                crumbs += `<span class="text-blue-800 font-bold">進行中</span>`;
+                progressEl.innerHTML = crumbs;
+            }
+
+            // 清空舊選項
+            optionsEl.innerHTML = '';
+
+            // 設定問題
+            questionEl.innerText = currentNode.question;
+
+            // 生成按鈕
+            currentNode.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left p-4 md:p-5 bg-white border border-blue-200 text-blue-900 rounded-xl shadow-sm text-lg font-bold hover:bg-blue-50 active-scale transition flex justify-between items-center";
+                btn.innerHTML = `
+                    <span>${opt.label}</span>
+                    <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                `;
+                btn.onclick = () => handleOptionClick(opt);
+                optionsEl.appendChild(btn);
+            });
+        }
+
+        function handleOptionClick(option) {
+            treePath.push({
+                node: currentNode,
+                selectedLabel: option.label
+            });
+
+            if (option.result) {
+                // 抵達結果
+                showTreeResult(option.result);
+            } else if (option.next) {
+                // 進入下一層
+                currentNode = option.next;
+                renderNode();
+            }
+        }
+
+        function treeGoBack() {
+            const lastStep = treePath.pop();
+            currentNode = lastStep.node;
+            document.getElementById('tree-result').classList.add('hidden');
+            document.getElementById('tree-question-card').classList.remove('hidden');
+            document.getElementById('tree-options').classList.remove('hidden');
+            renderNode();
+        }
+
+        function showTreeResult(resultText) {
+            document.getElementById('tree-question-card').classList.add('hidden');
+            document.getElementById('tree-options').classList.add('hidden');
+            
+            const resultEl = document.getElementById('tree-result');
+            // 處理換行符號
+            document.getElementById('tree-result-text').innerHTML = resultText.replace(/\n/g, '<br><span class="text-lg text-gray-600 mt-2 block">');
+            
+            resultEl.classList.remove('hidden');
+            resultEl.classList.add('fade-in');
+        }
+
+    </script>
+</body>
+</html>
